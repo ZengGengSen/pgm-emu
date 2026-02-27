@@ -1,0 +1,197 @@
+FBNEO_BURN_DIR			:= $(MAIN_FBNEO_DIR)/burn
+FBNEO_BURN_DRIVERS_DIR	:= $(MAIN_FBNEO_DIR)/burn/drv
+FBNEO_BURN_DEVICES_DIR	:= $(MAIN_FBNEO_DIR)/burn/devices
+FBNEO_BURN_SND_DIR		:= $(MAIN_FBNEO_DIR)/burn/snd
+FBNEO_BURNER_DIR		:= $(MAIN_FBNEO_DIR)/burner
+FBNEO_CPU_DIR			:= $(MAIN_FBNEO_DIR)/cpu
+FBNEO_GENERATED_DIR		:= $(MAIN_FBNEO_DIR)/dep/generated
+FBNEO_INTERFACE_DIR		:= $(MAIN_FBNEO_DIR)/intf
+FBNEO_LIB_DIR			:= $(MAIN_FBNEO_DIR)/dep/libs
+FBNEO_SCRIPTS_DIR		:= $(MAIN_FBNEO_DIR)/dep/scripts
+LIBRETRO_DIR			:= $(FBNEO_BURNER_DIR)/libretro
+LIBRETRO_COMM_DIR		:= $(LIBRETRO_DIR)/libretro-common
+UGUI_DIR				:= $(LIBRETRO_DIR)/deps/ugui
+
+PGM_DIR					:= $(FBNEO_BURN_DRIVERS_DIR)/pgm
+ARM7_CPU_DIR			:= $(FBNEO_CPU_DIR)/arm7
+
+PGM_RS_DIR              := $(MAIN_FBNEO_DIR)/../pgm
+
+ifeq ($(AUTOGEN_DATS), 1)
+	FBNEO_DEFINES += -DAUTOGEN_DATS
+endif
+
+FBNEO_BURN_DRIVERS_DIRS := $(PGM_DIR) $(FBNEO_BURN_DRIVERS_DIR)
+
+FBNEO_BURN_DIRS := $(FBNEO_BURN_DEVICES_DIR) \
+	$(FBNEO_BURN_SND_DIR) \
+	$(FBNEO_BURN_DRIVERS_DIRS)
+
+FBNEO_CPU_DIRS := $(FBNEO_CPU_DIR) $(ARM7_CPU_DIR)
+
+FBNEO_INTERFACE_DIRS := $(FBNEO_INTERFACE_DIR)/audio
+
+# FBNeo framework
+SOURCES_C += $(FBNEO_BURNER_DIR)/ioapi.c \
+	$(FBNEO_BURNER_DIR)/unzip.c
+
+SOURCES_CXX += $(FBNEO_BURN_DIR)/burn.cpp \
+	$(FBNEO_BURN_DIR)/burn_gun.cpp \
+	$(FBNEO_BURN_DIR)/burn_memory.cpp \
+	$(FBNEO_BURN_DIR)/burn_sound.cpp \
+	$(FBNEO_BURN_DIR)/cheat.cpp \
+	$(FBNEO_BURN_DIR)/debug_track.cpp \
+	$(FBNEO_BURN_DIR)/hiscore.cpp \
+	$(FBNEO_BURN_DIR)/load.cpp \
+	$(FBNEO_BURN_DIR)/timer.cpp \
+	$(FBNEO_BURNER_DIR)/conc.cpp \
+	$(FBNEO_BURNER_DIR)/dat.cpp \
+	$(FBNEO_BURNER_DIR)/statec.cpp \
+	$(FBNEO_BURNER_DIR)/zipfn.cpp \
+	$(FBNEO_BURNER_DIR)/nvram.cpp \
+	$(FBNEO_INTERFACE_DIR)/audio/aud_dsp.cpp \
+	$(FBNEO_INTERFACE_DIR)/audio/lowpass2.cpp
+
+ifneq ($(STATIC_LINKING), 1)
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/file/file_path.c \
+		$(LIBRETRO_COMM_DIR)/file/file_path_io.c \
+		$(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
+		$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+		$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
+		$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
+		$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+		$(LIBRETRO_COMM_DIR)/compat/compat_strldup.c \
+		$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
+		$(LIBRETRO_COMM_DIR)/string/stdstring.c \
+		$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+		$(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
+		$(LIBRETRO_COMM_DIR)/features/features_cpu.c \
+		$(LIBRETRO_COMM_DIR)/file/config_file.c \
+		$(LIBRETRO_COMM_DIR)/file/config_file_userdata.c \
+		$(LIBRETRO_COMM_DIR)/lists/string_list.c \
+		$(LIBRETRO_COMM_DIR)/memmap/memalign.c \
+		$(LIBRETRO_COMM_DIR)/time/rtime.c
+	ifeq ($(HAVE_UWP), 1)
+		SOURCES_CXX += $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation_uwp.cpp
+	else
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
+	endif
+endif
+
+INCLUDE_DIRS := $(LIBRETRO_COMM_DIR)/include \
+	$(LIBRETRO_DIR) \
+	$(FBNEO_BURN_DIR) \
+	$(FBNEO_CPU_DIR) \
+	$(FBNEO_BURN_SND_DIR) \
+	$(FBNEO_BURN_DEVICES_DIR) \
+	$(FBNEO_INTERFACE_DIR) \
+	$(FBNEO_INTERFACE_DIR)/audio \
+	$(FBNEO_BURNER_DIR) \
+	$(FBNEO_CPU_DIR) \
+	$(FBNEO_LIB_DIR)/zlib \
+	$(FBNEO_LIB_DIR)/lib7z \
+	$(PGM_DIR) \
+	$(FBNEO_GENERATED_DIR) \
+	$(FBNEO_LIB_DIR) \
+	$(UGUI_DIR)
+
+ARM_FLAGS =
+
+ifeq (,$(findstring msvc,$(platform)))
+	CFLAGS += -std=gnu99
+endif
+
+ifeq (,$(findstring msvc,$(platform)))
+	CXXFLAGS += -std=gnu++98
+endif
+
+#ifeq ($(USE_X64_DRC), 1)
+#	FBNEO_DEFINES  += -DXBYAK_NO_OP_NAMES -DMIPS3_X64_DRC
+#	FBNEO_SRC_DIRS += $(MIPS3_X64_DRC_CPU_DIR)
+#	ifeq (,$(findstring msvc,$(platform)))
+#		CXXFLAGS += -std=gnu++11
+#	endif
+#else
+#	ifeq (,$(findstring msvc,$(platform)))
+#		CXXFLAGS += -std=gnu++98
+#	endif
+#endif
+
+NEON_FLAGS=
+
+ifeq ($(HAVE_NEON), 1)
+	NEON_FLAGS = -mvectorize-with-neon-quad
+	# ios and android don't support this
+	ifneq (,$(findstring ios,$(platform)))
+		NEON_FLAGS =
+	endif
+	ifneq (,$(findstring android,$(platform)))
+		NEON_FLAGS =
+	endif
+endif
+
+ifeq ($(SUPPORT_LARGE_FILES), 1)
+	FBNEO_DEFINES += -D_FILE_OFFSET_BITS=64
+endif
+
+ifeq ($(EXTERNAL_ZLIB), 1)
+	FBNEO_DEFINES += -DEXTERNAL_ZLIB
+	LDFLAGS += -lz
+else
+	# only msvc doesn't have unistd.h ?
+	ifeq (,$(findstring msvc,$(platform)))
+		FBNEO_DEFINES += -DHAVE_UNISTD_H
+	endif
+	SOURCES_C += $(FBNEO_LIB_DIR)/zlib/inflate.c \
+		$(FBNEO_LIB_DIR)/zlib/zutil.c \
+		$(FBNEO_LIB_DIR)/zlib/inffast.c \
+		$(FBNEO_LIB_DIR)/zlib/crc32.c \
+		$(FBNEO_LIB_DIR)/zlib/adler32.c \
+		$(FBNEO_LIB_DIR)/zlib/inftrees.c \
+		$(FBNEO_LIB_DIR)/zlib/deflate.c \
+		$(FBNEO_LIB_DIR)/zlib/trees.c
+endif
+
+ifeq ($(INCLUDE_7Z_SUPPORT), 1)
+	FBNEO_DEFINES += -DINCLUDE_7Z_SUPPORT -DZ7_PPMD_SUPPORT -DZ7_ST
+	SOURCES_CXX += $(FBNEO_BURNER_DIR)/un7z.cpp
+	ifneq ($(STATIC_LINKING), 1)
+		SOURCES_C += $(FBNEO_LIB_DIR)/lib7z/7zArcIn.c \
+			$(FBNEO_LIB_DIR)/lib7z/7zBuf.c \
+			$(FBNEO_LIB_DIR)/lib7z/7zCrc.c \
+			$(FBNEO_LIB_DIR)/lib7z/7zCrcOpt.c \
+			$(FBNEO_LIB_DIR)/lib7z/7zDec.c \
+			$(FBNEO_LIB_DIR)/lib7z/7zStream.c \
+			$(FBNEO_LIB_DIR)/lib7z/Bcj2.c \
+			$(FBNEO_LIB_DIR)/lib7z/Bra.c \
+			$(FBNEO_LIB_DIR)/lib7z/Bra86.c \
+			$(FBNEO_LIB_DIR)/lib7z/BraIA64.c \
+			$(FBNEO_LIB_DIR)/lib7z/CpuArch.c \
+			$(FBNEO_LIB_DIR)/lib7z/Delta.c \
+			$(FBNEO_LIB_DIR)/lib7z/Lzma2Dec.c \
+			$(FBNEO_LIB_DIR)/lib7z/LzmaDec.c \
+			$(FBNEO_LIB_DIR)/lib7z/Ppmd7.c \
+			$(FBNEO_LIB_DIR)/lib7z/Ppmd7Dec.c
+	endif
+endif
+
+SOURCES_CXX += $(LIBRETRO_DIR)/libretro.cpp \
+	$(LIBRETRO_DIR)/retro_common.cpp \
+	$(LIBRETRO_DIR)/retro_input.cpp \
+	$(LIBRETRO_DIR)/retro_memory.cpp \
+	$(LIBRETRO_DIR)/retro_string.cpp \
+	$(LIBRETRO_DIR)/ips_manager.cpp \
+	$(LIBRETRO_DIR)/romdata.cpp
+
+SOURCES_C += $(UGUI_DIR)/ugui.c \
+	$(UGUI_DIR)/ugui_textbox.c \
+	$(UGUI_DIR)/font_8x8.c \
+	$(UGUI_DIR)/SourceHanSansCN_Medium_13X17.c \
+	$(LIBRETRO_DIR)/ugui_tools.c
+
+# GIT HASH
+GIT_VERSION := $(shell git rev-parse --short HEAD || echo unknown)
+ifneq ($(GIT_VERSION),unknown)
+	GIT_DATE := $(shell git log -1 --format="%at" | xargs -I{} date -d @{} +%y%m%d)
+	CXXFLAGS += -DGIT_DATE=\"$(GIT_DATE)\" -DGIT_VERSION=\"GIT$(GIT_VERSION)\"
+endif
