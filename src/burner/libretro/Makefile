@@ -78,7 +78,11 @@ ifneq (,$(findstring unix,$(platform)))
 
 # Windows
 else
+ifeq ($(STATIC_LINKING),1)
+	TARGET := lib$(TARGET_NAME)_libretro.a
+else
 	TARGET := $(TARGET_NAME)_libretro.dll
+endif
 	CC ?= gcc
 	CXX ?= g++
 	SHARED := -shared -Wl,-no-undefined -Wl,--version-script=$(VERSION_SCRIPT)
@@ -175,9 +179,6 @@ endif
 CFLAGS += $(fpic) $(FBNEO_DEFINES) -MMD
 CXXFLAGS += $(fpic) $(FBNEO_DEFINES) -MMD
 LDFLAGS += $(fpic)
-
-LDFLAGS += -L$(PGM_RS_DIR)/target/release
-LIBS += -lpgm -lws2_32 -luserenv -lntdll -lbcrypt
 
 ifeq (,$(findstring msvc,$(platform)))
 	CFLAGS += -fforce-addr  \
@@ -277,7 +278,6 @@ endif
 	@$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJS)
-	cd $(PGM_RS_DIR) && cargo build --release
 ifeq ($(STATIC_LINKING), 1)
 ifeq ($(SPLIT_UP_LINK), 1)
 	$(AR) rcs $@ $(foreach OBJS,$(OBJS),$(NEWLINE) $(AR) q $@ $(OBJS))

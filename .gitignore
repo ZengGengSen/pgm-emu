@@ -36,3 +36,8 @@ src/burner/libretro/m68kmake
 src/burner/libretro/pgmspritecreate
 !gamelist.txt
 !src/dep/generated/
+
+
+# Added by cargo
+
+/target
