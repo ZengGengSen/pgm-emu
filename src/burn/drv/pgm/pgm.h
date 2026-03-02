@@ -99,7 +99,9 @@ void install_protection_asic27a_kovshp();
 void install_protection_asic27a_py2k2();
 void install_protection_asic27a_kovgsyx();
 
-// pgm_crypt
+// pgm_crypt – implemented in Rust (src/crypt/); use C linkage to match
+// the #[no_mangle] extern "C" symbols exported by the Rust library.
+extern "C" {
 void pgm_decrypt_kov();
 void pgm_decrypt_kovsh();
 void pgm_decrypt_kovshp();
@@ -138,5 +140,8 @@ void pgm_decrypt_kovassge();
 void pgm_decrypt_kovassgn();
 void pgm_decrypt_kovlsqho();
 void pgm_decrypt_kovgsyx();
+void pgm_decrypt_kovgsyx_program();
+void pgm_decrypt_kovfyzq4in1();
+} // extern "C"
 
 
