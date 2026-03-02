@@ -29,6 +29,7 @@ fbneo.dat
 /.github
 *.so
 *.dll
+*.a
 *.o
 *.d
 src/burner/libretro/ctvmake
